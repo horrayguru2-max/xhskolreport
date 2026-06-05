@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalt KOL 分析报告 · 2026-06-05</title>
+<style>
+:root {
+  --dark: #0D1B2A;
+  --blue: #1565C0;
+  --cyan: #00B4D8;
+  --cyan-light: #90E0EF;
+  --gold: #FFB703;
+  --green: #16A34A;
+  --yellow: #D97706;
+  --red: #DC2626;
+  --bg: #F0F4F8;
+  --card: #FFFFFF;
+  --text: #1E293B;
+  --muted: #64748B;
+  --border: #E2E8F0;
+  --selected-bg: #EFF6FF;
+  --selected-border: #1565C0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+a { color: var(--blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* HEADER */
+.header {
+  background: linear-gradient(135deg, #0D1B2A 0%, #1565C0 100%);
+  color: white;
+  padding: 32px 24px 28px;
+}
+.header-inner { max-width: 1100px; margin: 0 auto; }
+.brand-row { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+.brand-logo {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  color: #90E0EF;
+}
+.brand-title { font-size: 20px; font-weight: 600; }
+.brand-sub { font-size: 13px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+.stats-row { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 16px; }
+.stat-chip {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.85);
+}
+.stat-chip strong { color: #90E0EF; }
+
+/* PRODUCT PICKS */
+.section { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+.section-title { font-size: 16px; font-weight: 700; color: var(--dark); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.section-title::before { content: ''; display: inline-block; width: 4px; height: 18px; background: var(--blue); border-radius: 2px; }
+.product-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.product-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border-top: 4px solid var(--blue);
+}
+.product-card.kdry { border-top-color: #0284C7; }
+.product-card.nostink { border-top-color: #7C3AED; }
+.product-card.airplus { border-top-color: #059669; }
+.product-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.product-desc { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+.product-pick { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.pick-rank {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; flex-shrink: 0;
+}
+.pick-rank.r1 { background: #FFD700; color: #7B5800; }
+.pick-rank.r2 { background: #C0C0C0; color: #444; }
+.pick-rank.r3 { background: #CD7F32; color: white; }
+.pick-name { font-size: 13px; font-weight: 600; }
+.pick-er { font-size: 11px; color: var(--muted); margin-left: auto; }
+
+/* RANKING SECTION */
+.ranking-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px; flex-wrap: wrap; gap: 8px;
+}
+.legend { display: flex; gap: 16px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* KOL CARDS */
+.kol-grid { display: flex; flex-direction: column; gap: 12px; }
+
+.kol-card {
+  background: var(--card);
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  transition: box-shadow 0.2s;
+}
+.kol-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.10); }
+.kol-card.selected {
+  border-color: var(--selected-border);
+  background: var(--selected-bg);
+}
+.kol-card.not-selected { opacity: 0.82; }
+
+.kol-main { display: flex; gap: 0; align-items: stretch; }
+
+/* Rank badge */
+.rank-col {
+  width: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 8px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+}
+.rank-num { font-size: 22px; font-weight: 800; color: var(--muted); line-height: 1; }
+.selected .rank-num { color: var(--blue); }
+.selected-badge {
+  margin-top: 6px;
+  background: var(--blue);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.not-sel-badge {
+  margin-top: 6px;
+  background: #E2E8F0;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 5px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+}
+
+/* Info col */
+.info-col { flex: 1; padding: 14px 16px; min-width: 0; }
+.kol-header { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.kol-name { font-size: 16px; font-weight: 700; color: var(--dark); }
+.kol-name a { color: inherit; }
+.kol-name a:hover { color: var(--blue); text-decoration: none; }
+.real-name-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #FFF7ED;
+  border: 1px solid #FDBA74;
+  border-radius: 10px;
+  padding: 2px 9px;
+  margin-top: 4px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #9A3412;
+}
+.real-name-badge .rn-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: #C2410C;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.kol-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+.tag {
+  background: #F1F5F9;
+  color: var(--muted);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.selected .tag { background: #DBEAFE; color: #1D4ED8; }
+.kol-bio { font-size: 12px; color: var(--muted); margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 480px; }
+
+/* Metrics row */
+.metrics-row { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+.metric { display: flex; flex-direction: column; gap: 2px; }
+.metric-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.metric-value { font-size: 15px; font-weight: 700; line-height: 1; }
+.er-green { color: var(--green); }
+.er-yellow { color: var(--yellow); }
+.er-red { color: var(--red); }
+.stab-good { color: var(--green); }
+.stab-ok { color: var(--yellow); }
+.stab-bad { color: var(--red); }
+
+/* ER bar */
+.er-bar-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.er-bar-track { flex: 1; height: 6px; background: #E2E8F0; border-radius: 3px; max-width: 200px; }
+.er-bar-fill { height: 100%; border-radius: 3px; }
+
+/* Product fit */
+.fit-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.fit-item { display: flex; align-items: center; gap: 5px; }
+.fit-label { font-size: 11px; font-weight: 600; color: var(--muted); min-width: 52px; }
+.fit-stars { display: flex; gap: 2px; }
+.star-on { color: #F59E0B; font-size: 12px; }
+.star-off { color: #D1D5DB; font-size: 12px; }
+
+/* Analysis */
+.analysis-text {
+  font-size: 12.5px;
+  color: #334155;
+  line-height: 1.65;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  margin-top: 2px;
+}
+.selected .analysis-text { border-top-color: #BFDBFE; }
+
+.warning-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #FEF3C7;
+  border: 1px solid #FCD34D;
+  color: #92400E;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-top: 6px;
+}
+.special-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #F0FDF4;
+  border: 1px solid #86EFAC;
+  color: #166534;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-top: 6px;
+}
+
+/* Divider between selected/not-selected */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 12px;
+}
+.section-divider .line { flex: 1; height: 1px; background: var(--border); }
+.section-divider .label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+  background: var(--bg);
+  padding: 0 8px;
+}
+
+/* FOOTER */
+.footer {
+  text-align: center;
+  padding: 24px 16px;
+  font-size: 12px;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+@media (max-width: 700px) {
+  .product-grid { grid-template-columns: 1fr; }
+  .metrics-row { gap: 12px; }
+  .kol-bio { max-width: 240px; }
+  .fit-row { gap: 8px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="brand-row">
+      <div class="brand-logo">KALT</div>
+      <div>
+        <div class="brand-title">小红书 KOL 分析报告</div>
+        <div class="brand-sub">产品线：kdry · nostink · air+</div>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-chip">📅 分析日期：<strong>2026-06-05</strong></div>
+      <div class="stat-chip">👥 分析博主：<strong>22 位</strong></div>
+      <div class="stat-chip">✅ 入选合作：<strong>10 位</strong></div>
+      <div class="stat-chip">📊 数据来源：最近 30 篇笔记（自动抓取）</div>
+      <div class="stat-chip">⚠️ ER 以点赞计算（API 不返回收藏/评论）</div>
+    </div>
+  </div>
+</div>
+
+<!-- PRODUCT QUICK PICKS -->
+<div class="section">
+  <div class="section-title">产品专属推荐 TOP 3</div>
+  <div class="product-grid">
+
+    <div class="product-card kdry">
+      <div class="product-name" style="color:#0284C7">💨 kdry &nbsp;<span style="font-size:12px;font-weight:400;color:#64748B">家居烘干 · 去湿</span></div>
+      <div class="product-desc">目标受众：有孩子的家庭主妇 · 衣物护理痛点</div>
+      <div class="product-pick"><div class="pick-rank r1">1</div><div class="pick-name">Cindy旭宝妈咪</div><div class="pick-er">ER 7.93%</div></div>
+      <div class="product-pick"><div class="pick-rank r2">2</div><div class="pick-name">美人鱼麻麻</div><div class="pick-er">ER 3.05%</div></div>
+      <div class="product-pick"><div class="pick-rank r3">3</div><div class="pick-name">小熊爱吃橘子🐻</div><div class="pick-er">ER 3.54%</div></div>
+    </div>
+
+    <div class="product-card nostink">
+      <div class="product-name" style="color:#7C3AED">🌿 nostink &nbsp;<span style="font-size:12px;font-weight:400;color:#64748B">去味剂 · 冷气/家居异味</span></div>
+      <div class="product-desc">目标受众：冷气用户 · 有孩子/宠物的家庭</div>
+      <div class="product-pick"><div class="pick-rank r1">1</div><div class="pick-name">奶茶不加珍珠</div><div class="pick-er">ER 3.33%</div></div>
+      <div class="product-pick"><div class="pick-rank r2">2</div><div class="pick-name">Cindy旭宝妈咪</div><div class="pick-er">ER 7.93%</div></div>
+      <div class="product-pick"><div class="pick-rank r3">3</div><div class="pick-name">小琳有好康</div><div class="pick-er">ER 4.44%</div></div>
+    </div>
+
+    <div class="product-card airplus">
+      <div class="product-name" style="color:#059669">🌬️ air+ &nbsp;<span style="font-size:12px;font-weight:400;color:#64748B">空气质量提升</span></div>
+      <div class="product-desc">目标受众：注重健康的家庭 · 都市现代居所</div>
+      <div class="product-pick"><div class="pick-rank r1">1</div><div class="pick-name">Cindy旭宝妈咪</div><div class="pick-er">ER 7.93%</div></div>
+      <div class="product-pick"><div class="pick-rank r2">2</div><div class="pick-name">小燕子（医学生）</div><div class="pick-er">ER 6.92%</div></div>
+      <div class="product-pick"><div class="pick-rank r3">3</div><div class="pick-name">小琳有好康</div><div class="pick-er">ER 4.44%</div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FULL RANKING -->
+<div class="section">
+  <div class="ranking-header">
+    <div class="section-title" style="margin-bottom:0">全部 22 位博主排名（按 ER 降序）</div>
+    <div class="legend">
+      <div class="legend-item"><div class="dot" style="background:#16A34A"></div> ER &gt;5%</div>
+      <div class="legend-item"><div class="dot" style="background:#D97706"></div> ER 2–5%</div>
+      <div class="legend-item"><div class="dot" style="background:#DC2626"></div> ER &lt;2%</div>
+      <div class="legend-item"><div class="dot" style="background:#1565C0;width:12px;height:12px;border-radius:2px"></div> 已入选</div>
+    </div>
+  </div>
+
+  <div class="kol-grid" id="kolGrid"></div>
+</div>
+
+<div class="footer">
+  报告由自动抓取数据 + AI 分析生成 · 数据来源：小红书 user_posted API · 最近 30 篇笔记<br>
+  Celine Tan（客户名：Celine Tan · 账号 5d1362750000000016025a44）账号不可访问，未纳入分析
+</div>
+
+<script>
+const realNameMap = {
+  "https://www.xiaohongshu.com/user/profile/6345ff65000000001901e51c": "Yeow Cindy",
+  "https://www.xiaohongshu.com/user/profile/6460c76e0000000012035b1b": "Lim Kim Yen",
+  "https://www.xiaohongshu.com/user/profile/5dfa5efc00000000010062e8": "Teoh Hsu Ling",
+  "https://www.xiaohongshu.com/user/profile/5dabf9ef000000000100a129": "YIN YEE",
+  "https://www.xiaohongshu.com/user/profile/60b99011000000000100ac6d": "Chung Ai Ling",
+  "https://www.xiaohongshu.com/user/profile/5fe1b2ba000000000100a86b": "Lee Jia Rou",
+  "https://www.xiaohongshu.com/user/profile/5f37d4e80000000001001059": "chew kentfy",
+  "https://www.xiaohongshu.com/user/profile/5f9960640000000001001de6": "TEN KAH LOON",
+  "https://www.xiaohongshu.com/user/profile/64a8cedb000000000a021c4e": "yun peng",
+  "https://www.xiaohongshu.com/user/profile/5e244ad70000000001005328": "Hui tong",
+  "https://www.xiaohongshu.com/user/profile/5cf68ce3000000001601a00f": "Lim Zu Yi",
+  "https://www.xiaohongshu.com/user/profile/64965e7c000000002a037441": "Kainee",
+  "https://www.xiaohongshu.com/user/profile/5e6209d900000000010059b2": "Kylie Sam",
+  "https://www.xiaohongshu.com/user/profile/5f92ac09000000000100b563": "zee mei",
+  "https://www.xiaohongshu.com/user/profile/5db39fa600000000010082c9": "Sze Wei",
+  "https://www.xiaohongshu.com/user/profile/64d26f11000000000b01652f": "Aleeya Natasha",
+  "https://www.xiaohongshu.com/user/profile/5c585321000000001003712d": "goie su yee",
+  "https://www.xiaohongshu.com/user/profile/5ea1c0c1000000000100b5d1": "Eu Jia Hui",
+  "https://www.xiaohongshu.com/user/profile/5d2284a5000000001101fe98": "LOW MEI KEI",
+  "https://www.xiaohongshu.com/user/profile/5d0c7898000000001600cdfa": "KOK YI TING",
+  "https://www.xiaohongshu.com/user/profile/611276790000000001006675": "MARY",
+  "https://www.xiaohongshu.com/user/profile/623aeb700000000010004794": "Nicole tan sher nee",
+};
+
+const kols = [
+  {
+    rank: 1, selected: true,
+    name: "Cindy旭宝妈咪",
+    url: "https://www.xiaohongshu.com/user/profile/6345ff65000000001901e51c",
+    followers: 1400, avgLikes: 111, er: 7.93, stability: 1.72,
+    bio: "搬来马六甲的全职妈咪 | 爱吃爱打扮爱买 · 马来西亚",
+    tags: ["宝妈", "家庭", "马六甲", "全职妈妈"],
+    kdry: 5, nostink: 5, airplus: 5,
+    analysis: "全组最高 ER 7.93%，全职妈妈身份让家居产品种草极具说服力。kdry 衣物烘干、nostink 家居异味、air+ 孩子呼吸健康——三款产品的痛点场景都是她日常生活的真实写照，内容天然植入无违和感。<br><span class='warning-chip'>⚠️ 风险</span> 稳定度 1.72 偏高，部分帖子落差大，建议沟通内容方向把控质量。"
+  },
+  {
+    rank: 2, selected: true,
+    name: "小燕子",
+    url: "https://www.xiaohongshu.com/user/profile/6460c76e0000000012035b1b",
+    followers: 1300, avgLikes: 90, er: 6.92, stability: 1.23,
+    bio: "01后 | MBBS 医学生 👩🏻‍⚕️ | 年轻健康生活分享 · 马来西亚",
+    tags: ["医学生", "MBBS", "健康", "年轻受众"],
+    kdry: 3, nostink: 3, airplus: 5,
+    analysis: "ER 6.92% 极高，医学生（MBBS）身份给 air+ 空气质量产品带来难得的专业背书。「学医的人都在用的空气净化方案」是极具说服力的内容角度。受众以同龄年轻人为主，适合开拓 Kalt 品牌的年轻用户群。<br><span class='warning-chip'>⚠️ 风险</span> 内容以个人日常为主，家居场景需创意引导；稳定度 1.23 偏高。"
+  },
+  {
+    rank: 3, selected: true,
+    name: "小琳有好康",
+    url: "https://www.xiaohongshu.com/user/profile/5dfa5efc00000000010062e8",
+    followers: 1800, avgLikes: 80, er: 4.44, stability: 0.22,
+    bio: "生活喜怒哀乐，该吃吃该喝喝 享受当下 ✨ 水瓶座",
+    tags: ["好物评测", "产品开箱", "稳定输出", "美食"],
+    kdry: 4, nostink: 5, airplus: 5,
+    analysis: "稳定度全组最佳（0.22），每帖点赞预期误差极小，品牌合作 ROI 高度可预测。已有喷雾产品评测经验，对液体/喷雾类产品（如 nostink）驾轻就熟，有商务合作先例（HONOR、Nattome）。<br><span class='special-chip'>✨ 推荐</span> 三款通用最稳博主，建议作为系列评测主力。"
+  },
+  {
+    rank: 4, selected: true,
+    name: "小熊爱吃橘子🐻",
+    url: "https://www.xiaohongshu.com/user/profile/5dabf9ef000000000100a129",
+    followers: 1300, avgLikes: 46, er: 3.54, stability: 0.39,
+    bio: "2位宝宝的妈 | 母婴·开箱·美食·好物·日常·穿搭 | 新加坡🇸🇬来回",
+    tags: ["宝妈", "母婴开箱", "2宝妈", "产品评测"],
+    kdry: 5, nostink: 4, airplus: 5,
+    analysis: "两个宝宝的妈妈，专注母婴好物开箱，ER 3.54%，稳定度 0.39 优秀。kdry（孩子衣物多，热带气候难干）和 air+（婴幼儿呼吸健康）都是其受众的真实需求，开箱博主身份让产品展示专业可信。<br><span class='warning-chip'>⚠️ 风险</span> 粉丝基数小（1300），建议搭配其他KOL联合投放。"
+  },
+  {
+    rank: 5, selected: true,
+    name: "奶茶不加珍珠",
+    url: "https://www.xiaohongshu.com/user/profile/60b99011000000000100ac6d",
+    followers: 1800, avgLikes: 60, er: 3.33, stability: 0.31,
+    bio: "探店｜美食🍨 分享好康 / 开箱好物分享 · 感谢关注",
+    tags: ["探店", "好物开箱", "冷气内容", "美食"],
+    kdry: 3, nostink: 5, airplus: 4,
+    analysis: "稳定度 0.31 极佳。<strong>关键优势：全组 22 人中唯一已有冷气相关内容的博主</strong>（笔记「家里要换冷气前先看这里！」），证明其粉丝对冷气/家居话题有强烈接受度。nostink 去味产品与冷气场景天然联结，是该产品最优先合作对象。<br><span class='special-chip'>✨ nostink 首选</span> 已有冷气受众基础，内容契合度最高。"
+  },
+  {
+    rank: 6, selected: false,
+    name: "jiarou.",
+    url: "https://www.xiaohongshu.com/user/profile/5fe1b2ba000000000100a86b",
+    followers: 3000, avgLikes: 100, er: 3.33, stability: 2.90,
+    bio: "01's 🇲🇾 日常 | 探店 🛒 | 美食 🍳 | 好物分享 🛍️ 天蝎座",
+    tags: ["探店", "美食", "好物"],
+    kdry: 3, nostink: 3, airplus: 3,
+    analysis: "ER 3.33% 数字漂亮，但稳定度 2.90 是全组最差。深挖原因：有一篇 1,632 赞的 CNY 爆文，其余帖子均约 20–50 赞。数据严重依赖单帖病毒传播，品牌合作效果不稳定，<strong>不建议选入</strong>。<br><span class='warning-chip'>⚠️ 落选原因</span> 数据假象：稳定度 2.90，单帖爆文拉高均值，实际表现平庸。"
+  },
+  {
+    rank: 7, selected: true,
+    name: "失眠脆脆鲨",
+    url: "https://www.xiaohongshu.com/user/profile/5f37d4e80000000001001059",
+    followers: 2000, avgLikes: 62, er: 3.10, stability: 0.35,
+    bio: "22岁 马来西亚柔佛新山 · 探店｜心得｜穿搭｜好物",
+    tags: ["新山本地", "探店", "穿搭", "年轻"],
+    kdry: 3, nostink: 3, airplus: 4,
+    analysis: "ER 3.10%，稳定度 0.35 极佳，是高度可预期的合作伙伴。年轻都市用户（22岁），新山本地 KOL，为 Kalt 品牌在柔佛市场提供地域覆盖。air+ 可走「年轻人注重自己小窝的空气质量」角度，贴近 Z世代 生活观。<br><span class='warning-chip'>⚠️ 风险</span> 内容聚焦新山，辐射范围有限。"
+  },
+  {
+    rank: 8, selected: true,
+    name: "纶佳分享好物",
+    url: "https://www.xiaohongshu.com/user/profile/5f9960640000000001001de6",
+    followers: 1300, avgLikes: 40, er: 3.08, stability: 1.21,
+    bio: "喜欢美食🍱 好物🎀 旅游🧳 唱歌🎵 游泳🏊 天蝎座 Malaysia",
+    tags: ["好物分享", "KOC", "产品种草"],
+    kdry: 4, nostink: 4, airplus: 4,
+    analysis: "账号名直接标榜「分享好物」，定位 KOC 产品种草，天然适合品牌合作。ER 3.08%。三款 Kalt 产品都符合其「好物」内容方向，可做开箱种草帖。<br><span class='warning-chip'>⚠️ 风险</span> 稳定度 1.21 偏高，帖子表现波动，需评估具体发帖质量。"
+  },
+  {
+    rank: 9, selected: true,
+    name: "美人鱼麻麻",
+    url: "https://www.xiaohongshu.com/user/profile/64a8cedb000000000a021c4e",
+    followers: 2100, avgLikes: 64, er: 3.05, stability: 0.44,
+    bio: "90后麻麻 · 记录生活点滴 | 种草好物 | 美食分享",
+    tags: ["宝妈", "好物种草", "家庭", "90后"],
+    kdry: 5, nostink: 4, airplus: 5,
+    analysis: "90后妈妈，ER 3.05%，稳定度 0.44 良好。家庭主妇身份对 kdry（衣物烘干）和 air+（孩子健康空气）的使用场景最贴近，粉丝画像以同龄妈妈群体为主，种草信任感强。<br><span class='warning-chip'>⚠️ 风险</span> 粉丝基数适中（2100），建议多篇系列内容提高渗透率。"
+  },
+  {
+    rank: 10, selected: true,
+    name: "Christine慧",
+    url: "https://www.xiaohongshu.com/user/profile/5e244ad70000000001005328",
+    followers: 3300, avgLikes: 99, er: 3.00, stability: 0.33,
+    bio: "分享 KL 美食好物日常 🈴作合作 DM · 美食博主 探店博主",
+    tags: ["KL生活", "好物分享", "稳定输出", "美食"],
+    kdry: 4, nostink: 4, airplus: 5,
+    analysis: "前10中粉丝最多之一（3300），稳定度 0.33 仅次于小琳有好康，内容质量稳健可期。KL大城市受众，都市家居升级调性与 air+ 品牌感匹配。有明确的合作 DM 渠道，商务接洽成本低。<br><span class='special-chip'>✨ 推荐</span> 稳健大账，适合品牌形象类内容。"
+  },
+  {
+    rank: 11, selected: false,
+    name: "爱探店的袋鼠",
+    url: "https://www.xiaohongshu.com/user/profile/5cf68ce3000000001601a00f",
+    followers: 2300, avgLikes: 66, er: 2.87, stability: 0.46,
+    bio: "91年袋鼠 🦘 🇲🇾 记录每一次吃喝玩乐，带你发现日常小惊喜",
+    tags: ["探店", "餐饮", "吃喝玩乐"],
+    kdry: 2, nostink: 2, airplus: 2,
+    analysis: "ER 2.87% 临近入选线，稳定度 0.46 表现良好。但内容 100% 聚焦餐饮探店，家居产品的关联度极低，受众购买意向不明确。可作为 Kalt 品牌曝光的边缘补充，但不建议作为核心合作。<br><span class='warning-chip'>⚠️ 落选原因</span> 内容与家居产品无交集，品牌契合度不足。"
+  },
+  {
+    rank: 12, selected: true,
+    name: "皮蛋solo粥🥘",
+    url: "https://www.xiaohongshu.com/user/profile/64965e7c000000002a037441",
+    followers: 6300, avgLikes: 165, er: 2.62, stability: 0.65,
+    bio: "00后 | 本科传媒 | 探店达人 美食分享 好康分享 🇲🇾",
+    tags: ["探店达人", "最广覆盖", "传媒背景", "美食"],
+    kdry: 3, nostink: 3, airplus: 3,
+    analysis: "前10中粉丝最多（6300），均点赞最高（165），提供其他纳米博主无法给予的曝光量。传媒专业背景保证内容制作质量，ER 2.62% 在该量级属健康水平。入选理由：在整体以纳米博主为主的合作矩阵中，需要一个规模较大的账号作为流量锚点。<br><span class='warning-chip'>⚠️ 风险</span> 品牌直接关联度低，适合做品牌曝光而非深度种草。"
+  },
+  {
+    rank: 13, selected: false,
+    name: "凯莉🍒",
+    url: "https://www.xiaohongshu.com/user/profile/5e6209d900000000010059b2",
+    followers: 3000, avgLikes: 56, er: 1.87, stability: 0.71,
+    bio: "处女座 Malaysia · Insta: kkylieks 生活穿搭美妆",
+    tags: ["生活", "穿搭", "美妆"],
+    kdry: 2, nostink: 2, airplus: 3,
+    analysis: "ER 1.87% 偏低，但有家具展（FRWD Furniture × Getha）和吸尘机（ECOVACS × Tineco）相关内容，说明受众有家居消费能力。若预算充裕，可作为家居品牌形象内容的补充投放，不建议核心合作。"
+  },
+  {
+    rank: 14, selected: false,
+    name: "妞享.游逛世界🌎",
+    url: "https://www.xiaohongshu.com/user/profile/5f92ac09000000000100b563",
+    followers: 2400, avgLikes: 43, er: 1.79, stability: 0.90,
+    bio: "365天生活香喷喷！冬天→日本/中国滑雪教学 春夏→新西兰策划旅游 滑雪教练",
+    tags: ["旅游", "滑雪", "海外"],
+    kdry: 1, nostink: 1, airplus: 2,
+    analysis: "旅游/滑雪教练博主，受众以旅行爱好者为主，在家时间有限，与 Kalt 家居产品关联性极低。ER 1.79% 偏低，内容方向与品牌完全不符，不建议合作。"
+  },
+  {
+    rank: 15, selected: false,
+    name: "微微的阿微",
+    url: "https://www.xiaohongshu.com/user/profile/5db39fa600000000010082c9",
+    followers: 1900, avgLikes: 29, er: 1.53, stability: 0.78,
+    bio: "太爱分享生活美好 📮 XHS私信一律不回 · 英迪国际大学",
+    tags: ["生活分享", "大学生"],
+    kdry: 2, nostink: 2, airplus: 2,
+    analysis: "综合生活分享博主，ER 1.53%，内容无明显家居/产品倾向，品牌契合度一般。商务接触有障碍（XHS私信不回），性价比偏低，不建议合作。"
+  },
+  {
+    rank: 16, selected: false,
+    name: "xiiao颖🎀3宝妈",
+    url: "https://www.xiaohongshu.com/user/profile/64d26f11000000000b01652f",
+    followers: 1800, avgLikes: 25, er: 1.39, stability: 0.38,
+    bio: "🇲🇾 02 | 好物分享｜探店｜母婴好物 | 158cm · KL/Pahang",
+    tags: ["3宝妈", "母婴好物", "KL"],
+    kdry: 5, nostink: 3, airplus: 4,
+    analysis: "⚠️ <strong>特别备注</strong>：三个孩子的妈妈，母婴好物分享博主，kdry（大家庭衣物量大）和 air+（孩子健康）的产品契合度极高，稳定度 0.38 也非常优秀。唯一弱项是 ER 仅 1.39%。<strong>若预算有余量，强烈建议纳入 kdry / air+ 的备选合作</strong>。<br><span class='special-chip'>⭐ 备选</span> 三宝妈身份与 kdry/air+ 高度契合，ER 偏低是唯一短板。"
+  },
+  {
+    rank: 17, selected: false,
+    name: "我不是数学家",
+    url: "https://www.xiaohongshu.com/user/profile/5c585321000000001003712d",
+    followers: 3400, avgLikes: 43, er: 1.26, stability: 1.09,
+    bio: "90后养成系博主 📝 好物分享 🍰 好吃分享 · 巨蟹座 Malaysia",
+    tags: ["美妆", "Watsons", "好物"],
+    kdry: 1, nostink: 1, airplus: 2,
+    analysis: "内容主要围绕美妆、Watsons 产品、美体护理，ER 1.26% 且稳定度 1.09 偏高。受众以美妆爱好者为主，与 Kalt 家居产品几乎无受众重叠，不建议合作。"
+  },
+  {
+    rank: 18, selected: false,
+    name: "小甜心",
+    url: "https://www.xiaohongshu.com/user/profile/5ea1c0c1000000000100b5d1",
+    followers: 4000, avgLikes: 46, er: 1.15, stability: 0.98,
+    bio: "Miss Petite Planet Int 马来西亚🥈 美食｜生活｜探店｜好物",
+    tags: ["选美", "美食", "生活"],
+    kdry: 2, nostink: 2, airplus: 2,
+    analysis: "4000 粉但 ER 仅 1.15%，粉丝量/互动比失衡。曾参与 Miss Petite Planet 选美，内容风格偏个人形象展示而非产品种草，粉丝对家居产品的购买转化率可能偏低，不建议合作。"
+  },
+  {
+    rank: 19, selected: false,
+    name: "Nicky",
+    url: "https://www.xiaohongshu.com/user/profile/5d2284a5000000001101fe98",
+    followers: 2700, avgLikes: 29, er: 1.07, stability: 0.60,
+    bio: "带你挖城市宝藏好去处💫 美食·活动·好物·旅行 · KL · 狮子座",
+    tags: ["KL探店", "活动资讯", "好物"],
+    kdry: 2, nostink: 3, airplus: 2,
+    analysis: "KL 城市探店博主，ER 1.07% 偏低但有涉及家电展/电器类内容，说明受众有一定家居消费意识。性价比不高，若有针对 KL 都市年轻用户的特定推广预算，可列为备选。"
+  },
+  {
+    rank: 20, selected: false,
+    name: "YiTing於碠",
+    url: "https://www.xiaohongshu.com/user/profile/5d0c7898000000001600cdfa",
+    followers: 1500, avgLikes: 12, er: 0.80, stability: 0.48,
+    bio: "好物分享｜打卡探店｜记录生活 📍 马来西亚柔佛 · 金牛座",
+    tags: ["好物", "探店", "柔佛"],
+    kdry: 2, nostink: 2, airplus: 2,
+    analysis: "ER 仅 0.80%，均点赞 12，互动量全组最低之一。账号主题为好物/探店/生活，内容定位虽然方向对，但影响力严重不足，投入产出比极低，不建议合作。"
+  },
+  {
+    rank: 21, selected: false,
+    name: "xm玛莉",
+    url: "https://www.xiaohongshu.com/user/profile/611276790000000001006675",
+    followers: 31100, avgLikes: 238, er: 0.77, stability: 1.80,
+    bio: "白羊轮椅女 | 先天脊柱裂+小儿麻痹 | 感谢关注 🤍 生活化分享 合集 · JOB合作",
+    tags: ["大V", "轮椅博主", "生活励志"],
+    kdry: 1, nostink: 1, airplus: 1,
+    analysis: "全组粉丝最多（31,100），但 ER 仅 0.77%，是「大但弱」的典型案例。轮椅女性博主，内容以个人生活励志为主，受众虽广但与 Kalt 家居产品关联度极低。<strong>高粉丝量掩盖低质量互动</strong>，若按常规报价合作将严重浪费预算，不建议合作。"
+  },
+  {
+    rank: 22, selected: false,
+    name: "可可",
+    url: "https://www.xiaohongshu.com/user/profile/623aeb700000000010004794",
+    followers: 6200, avgLikes: 45, er: 0.73, stability: 1.95,
+    bio: "喜爱分享生活的小盆友🌹 射手座 · 马来西亚柔佛",
+    tags: ["个人生活", "柔佛"],
+    kdry: 1, nostink: 1, airplus: 1,
+    analysis: "ER 最低（0.73%），数据极不稳定（1.95）：单帖最高 482 赞，其余多数低于 35 赞，疑有单帖异常流量。最近一篇帖子为 2025 年 11 月，账号活跃度明显下降。整体不具备合作价值，不建议合作。<br><span class='warning-chip'>⚠️ 落选原因</span> 数据异常 + 账号活跃度下降。"
+  }
+];
+
+function erClass(er) {
+  if (er >= 5) return 'er-green';
+  if (er >= 2) return 'er-yellow';
+  return 'er-red';
+}
+function erBarColor(er) {
+  if (er >= 5) return '#16A34A';
+  if (er >= 2) return '#D97706';
+  return '#DC2626';
+}
+function stabClass(s) {
+  if (s <= 0.5) return 'stab-good';
+  if (s <= 1.0) return 'stab-ok';
+  return 'stab-bad';
+}
+function stabLabel(s) {
+  if (s <= 0.5) return '稳定 ✓';
+  if (s <= 1.0) return '中等';
+  return '波动';
+}
+function stars(n) {
+  let s = '';
+  for (let i = 1; i <= 5; i++) {
+    s += i <= n ? '<span class="star-on">●</span>' : '<span class="star-off">○</span>';
+  }
+  return s;
+}
+function fmtNum(n) {
+  return n >= 10000 ? (n/10000).toFixed(1)+'万' : n.toLocaleString();
+}
+
+const grid = document.getElementById('kolGrid');
+
+// Add divider helper
+let shownDivider = false;
+
+kols.forEach((k, idx) => {
+  // Divider before not-selected section
+  if (!k.selected && !shownDivider) {
+    shownDivider = true;
+    const div = document.createElement('div');
+    div.className = 'section-divider';
+    div.innerHTML = '<div class="line"></div><div class="label">以下 12 位未入选 · 仍提供完整分析</div><div class="line"></div>';
+    grid.appendChild(div);
+  }
+
+  const erPct = Math.min(k.er / 10 * 100, 100);
+  const realName = realNameMap[k.url] || '';
+  const card = document.createElement('div');
+  card.className = 'kol-card' + (k.selected ? ' selected' : ' not-selected');
+  card.innerHTML = `
+    <div class="kol-main">
+      <div class="rank-col">
+        <div class="rank-num">${k.rank}</div>
+        ${k.selected
+          ? '<div class="selected-badge">入选</div>'
+          : '<div class="not-sel-badge">未选</div>'}
+      </div>
+      <div class="info-col">
+        <div class="kol-header">
+          <div>
+            <div class="kol-name"><a href="${k.url}" target="_blank" rel="noopener">${k.name}</a></div>
+            ${realName ? `<div class="real-name-badge"><span class="rn-label">客户名 ·</span> ${realName}</div>` : ''}
+            <div class="kol-tags">${k.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+          </div>
+        </div>
+        <div class="kol-bio">${k.bio}</div>
+        <div class="metrics-row">
+          <div class="metric">
+            <div class="metric-label">粉丝</div>
+            <div class="metric-value" style="color:#334155">${fmtNum(k.followers)}</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">均点赞</div>
+            <div class="metric-value" style="color:#334155">${k.avgLikes}</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">互动率 ER</div>
+            <div class="metric-value ${erClass(k.er)}">${k.er}%</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">稳定度</div>
+            <div class="metric-value ${stabClass(k.stability)}">${k.stability} <span style="font-size:11px;font-weight:400">${stabLabel(k.stability)}</span></div>
+          </div>
+        </div>
+        <div class="er-bar-wrap">
+          <span style="font-size:11px;color:#94A3B8;min-width:28px">ER</span>
+          <div class="er-bar-track">
+            <div class="er-bar-fill" style="width:${erPct}%;background:${erBarColor(k.er)}"></div>
+          </div>
+          <span style="font-size:11px;color:${erBarColor(k.er)};font-weight:600">${k.er}%</span>
+        </div>
+        <div class="fit-row">
+          <div class="fit-item">
+            <span class="fit-label" style="color:#0284C7">💨 kdry</span>
+            <div class="fit-stars">${stars(k.kdry)}</div>
+          </div>
+          <div class="fit-item">
+            <span class="fit-label" style="color:#7C3AED">🌿 nostink</span>
+            <div class="fit-stars">${stars(k.nostink)}</div>
+          </div>
+          <div class="fit-item">
+            <span class="fit-label" style="color:#059669">🌬️ air+</span>
+            <div class="fit-stars">${stars(k.airplus)}</div>
+          </div>
+        </div>
+        <div class="analysis-text">${k.analysis}</div>
+      </div>
+    </div>
+  `;
+  grid.appendChild(card);
+});
+</script>
+</body>
+</html>
